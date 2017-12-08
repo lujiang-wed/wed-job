@@ -1,23 +1,34 @@
 package com.taobao.pamirs.schedule;
 
+import com.taobao.pamirs.schedule.strategy.TBScheduleManagerFactory;
 import org.testng.annotations.Test;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.UUID;
+import java.util.HashMap;
+import java.util.Map;
+
 
 public class CommonTest {
     @Test
-    public static void main(String... args){
-        String result = "10.0.10.169"
-                + "$"
-                + (UUID.randomUUID().toString().replaceAll("-", "")
-                .toUpperCase());
-        SimpleDateFormat DATA_FORMAT_yyyyMMdd = new SimpleDateFormat("yyMMdd");
-        String s = DATA_FORMAT_yyyyMMdd.format(new Date());
-        long result1 = Long.parseLong(s) * 100000000
-                + Math.abs(result.hashCode() % 100000000);
-        System.out.println(result);
-        System.out.println(result1);
+    public static void main(String... args) {
+        try {
+            String zkConnectString = "172.16.60.12:2181,172.16.60.16:2182,172.16.60.33:2183";
+            String rootPath = "/rrkd_java_schedule/tasks_center";
+            String zkSessionTimeout = "20000";
+            String userName = "admin";
+            String password = "admin";
+
+            TBScheduleManagerFactory tbScheduleManagerFactory = new TBScheduleManagerFactory();
+            Map<String, String> zkConfig = new HashMap<String, String>();
+            zkConfig.put("zkConnectString", zkConnectString);
+            zkConfig.put("rootPath", rootPath);
+            zkConfig.put("zkSessionTimeout", zkSessionTimeout);
+            zkConfig.put("userName", userName);
+            zkConfig.put("password", password);
+            tbScheduleManagerFactory.setZkConfig(zkConfig);
+
+            tbScheduleManagerFactory.init();
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
     }
 }
