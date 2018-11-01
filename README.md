@@ -10,7 +10,9 @@
 1、job实现器追加pageNum参数（根据eachFetchDataNum和FetchCount计算得出）
 
 ### example：
+```
 IScheduleTaskDeal.List<T> selectTasks(String taskParameter, String ownSign, int taskItemNum, List<TaskItemDefine> taskItemDefines, int eachFetchDataNum, int pageNum) throws Exception;
+```
   
 作用：
   a）原版tbs的取数是一直前进的，这可能导致某些不允许出现fail的应用场景下，处理fail后task会积压直到第二轮调度开始fatchCount内部重置以后才能再次被处理。加入pageNum参数后，用户可自行实现这样一道补偿机制：自行修改pageNum强制任务从头开始执行而不用打断job执行。
