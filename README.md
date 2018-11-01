@@ -3,7 +3,7 @@
 
 [![Gitter](https://badges.gitter.im/wednesday-lj/wed-job.svg)](https://gitter.im/wednesday-lj/wed-job?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)   [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 
-一、基础用法与官方版一致，新手可以参考：http://geek.csdn.net/news/detail/65738
+一、基础用法与官方版一致，新手可以参考：https://my.oschina.net/wednesday/
 
 # DIFF点：
 
