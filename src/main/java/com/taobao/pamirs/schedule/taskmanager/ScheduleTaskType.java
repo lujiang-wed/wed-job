@@ -3,7 +3,7 @@ package com.taobao.pamirs.schedule.taskmanager;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * 调度任务类型
