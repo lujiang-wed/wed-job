@@ -22,6 +22,12 @@
 	mvn clean package
 
 **RELEASE NOTE**
+Feb 28 2019-1.0.1_GA：
+
+1. 修复Sleep时间短(ex:500ms)下，使用Timer类BUG导致Task停摆的问题
+2. 使用CuratorFramework代替官方ZooKeeper API已获得更好的链接稳定性已经重连机制
+3. 更新Java支持到[1.7,1.8)
+4. 整理项目结构
 
 Nov 5 2018-1.0.0：
 
