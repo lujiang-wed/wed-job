@@ -1,6 +1,6 @@
 package com.taobao.pamirs.schedule.strategy;
 
-import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class ScheduleStrategy {
 	public enum Kind{Schedule,Java,Bean}
