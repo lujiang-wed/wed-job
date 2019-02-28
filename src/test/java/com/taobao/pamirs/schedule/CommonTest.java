@@ -11,8 +11,8 @@ public class CommonTest {
     @Test
     public static void main(String... args) {
         try {
-            String zkConnectString = "172.16.60.12:2181,172.16.60.16:2182,172.16.60.33:2183";
-            String rootPath = "/rrkd_java_schedule/tasks_center";
+            String zkConnectString = "19.19.22.51:2181,19.19.22.52:2181,19.19.22.53:2181";
+            String rootPath = "/wed-job/tasks_center";
             String zkSessionTimeout = "20000";
             String userName = "admin";
             String password = "admin";

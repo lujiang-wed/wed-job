@@ -21,9 +21,11 @@ import java.util.Properties;
 public class ZKManager {
 
     private static final Logger logger        = LoggerFactory.getLogger(ZKManager.class);
-    private static final String SYS_ROOT_PATH = "wed-job";
+    private static final String SYS_ROOT_PATH = "/web-job";
+
     private Properties       zkProperties;
     private CuratorFramework zkClient;
+
     private List<ACL> acl = new ArrayList<>();
 
     public ZKManager(Properties properties) throws Exception {
@@ -31,11 +33,6 @@ public class ZKManager {
         this.connect();
     }
 
-    /**
-     * 连接zk集群
-     *
-     * @throws Exception zk异常抛出便于定位问题
-     */
     private void connect() throws Exception {
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(
                 2000,
@@ -53,45 +50,37 @@ public class ZKManager {
                 .authorization("digest", authString.getBytes())
                 .build();
 
+        zkClient.start();
+
+        createZookeeper(zkClient);
+
         acl.clear();
         acl.add(new ACL(ZooDefs.Perms.ALL, new Id("digest",
                 DigestAuthenticationProvider.generateDigest(authString))));
         acl.add(new ACL(ZooDefs.Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE));
 
         zkClient.setACL().withACL(acl);
-        zkClient.start();
-
-        createZookeeper(zkClient);
-
-    }
-
-    public CuratorFramework getZkClient() {
-        return zkClient;
     }
 
     private void createZookeeper(CuratorFramework zkClient) throws Exception {
         if (zkClient != null) {
             Stat sysPath = zkClient.checkExists().forPath(SYS_ROOT_PATH);
+            Stat rootPath = zkClient.checkExists().forPath(SYS_ROOT_PATH + this.zkProperties.getProperty(PropertyKeys.getByName(PropertyKeys.ROOT_PATH)));
             if (sysPath == null) {
                 zkClient.create()
                         .withMode(CreateMode.PERSISTENT)
                         .forPath(SYS_ROOT_PATH, Version.getVersion().getBytes());
             }
-            zkClient.create()
-                    .creatingParentContainersIfNeeded()
-                    .withMode(CreateMode.PERSISTENT)
-                    .forPath(this.zkProperties.getProperty(PropertyKeys.getByName(PropertyKeys.ROOT_PATH)
-                    ));
+            if (rootPath == null) {
+                zkClient.create()
+                        .creatingParentContainersIfNeeded()
+                        .withMode(CreateMode.PERSISTENT)
+                        .forPath(this.zkProperties.getProperty(PropertyKeys.getByName(PropertyKeys.ROOT_PATH)));
+            }
 
         } else {
             throw new RuntimeException("[WED-JOB]zookeeper链接失败...");
         }
-    }
-
-
-    public void close() {
-        logger.info("[WED-JOB]zookeeper shutdown...");
-        this.zkClient.close();
     }
 
     public static Properties createProperties() {
@@ -112,7 +101,20 @@ public class ZKManager {
         return this.zkProperties.getProperty(PropertyKeys.getByName(PropertyKeys.ZK_CONNECT_STRING));
     }
 
-    public boolean checkZookeeperState() throws Exception {
-        return zkClient != null && zkClient.getState().compareTo(CuratorFrameworkState.STARTED) > 0;
+    public boolean checkZookeeperState() {
+        return zkClient != null && zkClient.getState().equals(CuratorFrameworkState.STARTED);
+    }
+
+    public void close() {
+        logger.info("[WED-JOB]zookeeper shutdown...");
+        this.zkClient.close();
+    }
+
+    public CuratorFramework getZkClient() {
+        return zkClient;
+    }
+
+    public List<ACL> getAcl() {
+        return acl;
     }
 }
