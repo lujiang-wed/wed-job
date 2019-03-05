@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
@@ -50,7 +51,7 @@ public class ZKManager{
 	private void connect() throws Exception {
 		CountDownLatch connectionLatch = new CountDownLatch(1);
 		createZookeeper(connectionLatch);
-		connectionLatch.await();
+		connectionLatch.await(10,TimeUnit.SECONDS);
 	}
 	
 	private void createZookeeper(final CountDownLatch connectionLatch) throws Exception {
@@ -83,9 +84,17 @@ public class ZKManager{
 			} catch (Exception e) {
 				log.error(e.getMessage(),e);
 			}
-			//Disconnected事件介入处理，减少找不到Leader问题
-		} else if (event.getState() == KeeperState.Disconnected ) {
-			log.info("链接断开，等待重新建立ZK连接...");
+		} // Disconnected：Zookeeper会自动处理Disconnected状态重连
+		else if (event.getState() == KeeperState.Disconnected ) {
+			log.info("tb_hj_schedule Disconnected，等待重新建立ZK连接...");
+			try {
+				reConnection();
+			} catch (Exception e) {
+				log.error(e.getMessage(),e);
+			}
+		}
+		else if (event.getState() == KeeperState.NoSyncConnected ) {
+			log.info("tb_hj_schedule NoSyncConnected，等待重新建立ZK连接...");
 			try {
 				reConnection();
 			} catch (Exception e) {
@@ -100,6 +109,9 @@ public class ZKManager{
 	
 	public void close() throws InterruptedException {
 		log.info("关闭zookeeper连接");
+		if(zk == null) {
+ 		    return;
+		}
 		this.zk.close();
 	}
 	public static Properties createProperties(){

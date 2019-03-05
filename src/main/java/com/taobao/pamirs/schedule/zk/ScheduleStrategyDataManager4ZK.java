@@ -175,6 +175,15 @@ public class ScheduleStrategyDataManager4ZK{
 			if (value != null) {
 				String valueString = new String(this.getZooKeeper().getData(zkPath,false,null));
 				result = (ScheduleStrategyRunntime) this.gson.fromJson(valueString, ScheduleStrategyRunntime.class);
+				if(null==result){
+					throw new Exception("gson 反序列化异常,对象为null");
+				}
+				if(null==result.getStrategyName()){
+					throw new Exception("gson 反序列化异常,策略名字为null");
+				}
+				if(null==result.getUuid()){
+					throw new Exception("gson 反序列化异常,uuid为null");
+				}
 			}else{
 				result = new ScheduleStrategyRunntime();
 				result.setStrategyName(strategyName);
