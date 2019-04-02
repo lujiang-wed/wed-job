@@ -2,9 +2,8 @@
 
 ## tbschedule-wed正式更名为wed-job并发布第一个正式版 ##
 
-[![Gitter](https://badges.gitter.im/wednesday-lj/wed-job.svg)]
-(https://gitter.im/wednesday-lj/wed-job?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)  
-[![LICENSE](https://img.shields.io/badge/license-Anti%20996-blue.svg)](https://github.com/996icu/996.ICU/blob/master/LICENSE)
+[![Gitter](https://badges.gitter.im/wednesday-lj/wed-job.svg)](https://gitter.im/wednesday-lj/wed-job?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)  [![LICENSE](https://img.shields.io/badge/license-Anti%20996-blue.svg)](https://github.com/996icu/996.ICU/blob/master/LICENSE)
+
 
 基于TBSchedule官方3.2.18的重置版。TBSchedule具有框架轻、0入侵、效率高（高过elastic-job和xxl-job）等诸多特点，无奈官方于3.3.3.2版本后停止了升级与BUG修复。如此好的分布式任务调度框架弃之可惜，所以就让作者来捡个便宜吧（官方版所有地址均已下线，作者找不到原始开源协议故使用Apache 2.0以示尊重）。
 
