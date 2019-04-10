@@ -36,9 +36,11 @@ public class TBScheduleManagerStatic extends TBScheduleManager {
         }
     }
 
+    @Override
     public void initial() throws Exception {
         new Thread(this.currenScheduleServer.getTaskType() + "-" + this.currentSerialNumber + "-StartProcess") {
             @SuppressWarnings("static-access")
+            @Override
             public void run() {
                 try {
                     log.info("开始获取调度任务队列...... of " + currenScheduleServer.getUuid());
