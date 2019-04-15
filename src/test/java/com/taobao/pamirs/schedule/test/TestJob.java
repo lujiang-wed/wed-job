@@ -26,7 +26,7 @@ public class TestJob implements IScheduleTaskDealSingle<String> {
 
     @Override
     public List<String> selectTasks(String taskParameter, String ownSign, int taskItemNum, List<TaskItemDefine> taskItemList, int eachFetchDataNum, int pageNum) throws Exception {
-        List<String> data = new ArrayList<String>(){
+        return new ArrayList<String>(){
             private static final long serialVersionUID = -3952499302818550582L;
             {
                 add("a");
@@ -39,7 +39,6 @@ public class TestJob implements IScheduleTaskDealSingle<String> {
                 add("a");
             }
         };
-        return data;
     }
 
     @Override
