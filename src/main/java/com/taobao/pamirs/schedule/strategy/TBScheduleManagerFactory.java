@@ -413,10 +413,10 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
 
 class ManagerFactoryTimerTask extends java.util.TimerTask {
     private static transient Logger log = LoggerFactory.getLogger(ManagerFactoryTimerTask.class);
-    private TBScheduleManagerFactory factory;
-    private int count = 0;
+    TBScheduleManagerFactory factory;
+    int count = 0;
 
-    ManagerFactoryTimerTask(TBScheduleManagerFactory aFactory) {
+    public ManagerFactoryTimerTask(TBScheduleManagerFactory aFactory) {
         this.factory = aFactory;
     }
 
@@ -446,8 +446,8 @@ class ManagerFactoryTimerTask extends java.util.TimerTask {
 
 class InitialThread extends Thread {
     private static transient Logger log = LoggerFactory.getLogger(InitialThread.class);
-    private TBScheduleManagerFactory facotry;
-    private boolean isStop = false;
+    TBScheduleManagerFactory facotry;
+    boolean isStop = false;
 
     InitialThread(TBScheduleManagerFactory aFactory) {
         this.facotry = aFactory;
