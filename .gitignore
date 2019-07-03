@@ -3,6 +3,8 @@
 
 # IDE file
 .idea/
+target/
+.iml
 
 # Log file
 *.log
