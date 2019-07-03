@@ -19,6 +19,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
 public class ScheduleDataManager4ZK implements IScheduleDataManager {
     private static final Logger logger = LoggerFactory.getLogger(ScheduleDataManager4ZK.class);
 
@@ -43,7 +44,7 @@ public class ScheduleDataManager4ZK implements IScheduleDataManager {
                     .create()
                     .withMode(CreateMode.PERSISTENT)
                     .withACL(this.zkManager.getAcl())
-                    .forPath(this.pathBaseTaskType);
+                    .forPath(this.pathBaseTaskType, null);
         }
         loclaBaseTime = System.currentTimeMillis();
         String tempPath = this.getZooKeeper().create()
@@ -112,7 +113,7 @@ public class ScheduleDataManager4ZK implements IScheduleDataManager {
             this.getZooKeeper().create()
                     .withMode(CreateMode.PERSISTENT)
                     .withACL(this.zkManager.getAcl())
-                    .forPath(zkPath);
+                    .forPath(zkPath, null);
         }
     }
 
@@ -138,7 +139,7 @@ public class ScheduleDataManager4ZK implements IScheduleDataManager {
         this.getZooKeeper().create()
                 .withMode(CreateMode.PERSISTENT)
                 .withACL(this.zkManager.getAcl())
-                .forPath(zkPath);
+                .forPath(zkPath, null);
         //创建静态任务
         this.createScheduleTaskItem(baseTaskType, ownSign, this.loadTaskTypeBaseInfo(baseTaskType).getTaskItems());
         //标记信息初始化成功
@@ -240,7 +241,7 @@ public class ScheduleDataManager4ZK implements IScheduleDataManager {
                         .creatingParentsIfNeeded()
                         .withMode(CreateMode.PERSISTENT)
                         .withACL(this.zkManager.getAcl())
-                        .forPath(zkPath);
+                        .forPath(zkPath, null);
             }
             String zkTaskItemPath = zkPath + "/" + taskItem.getTaskItem();
             this.getZooKeeper().create()
@@ -529,11 +530,12 @@ public class ScheduleDataManager4ZK implements IScheduleDataManager {
                 this.getZooKeeper().create()
                         .creatingParentsIfNeeded()
                         .withMode(CreateMode.PERSISTENT)
-                        .withACL(this.zkManager.getAcl()).forPath(tempPath);
+                        .withACL(this.zkManager.getAcl())
+                        .forPath(tempPath, null);
             }
             this.getZooKeeper().create().creatingParentsIfNeeded()
                     .withMode(CreateMode.PERSISTENT).withACL(this.zkManager.getAcl())
-                    .forPath(zkPath);
+                    .forPath(zkPath, null);
         }
         for (String name : this.getZooKeeper().getChildren().forPath(zkPath)) {
             try {

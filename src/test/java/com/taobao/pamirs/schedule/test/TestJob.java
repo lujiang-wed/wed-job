@@ -16,7 +16,6 @@ import java.util.List;
  * @description
  * @since 2019/4/10 11:47
  */
-@Component("testJob")
 public class TestJob implements IScheduleTaskDealSingle<String> {
     @Override
     public boolean execute(String task, String ownSign) throws Exception {

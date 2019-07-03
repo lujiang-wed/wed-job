@@ -157,6 +157,7 @@ abstract class TBScheduleManager implements IStrategyTask {
         return this.currenScheduleServer.getTaskType();
     }
 
+    @Override
     public void initialTaskParameter(String strategyName, String taskParameter) {
         //没有实现的方法，需要的参数直接从任务配置中读取
     }
@@ -450,6 +451,7 @@ class HeartBeatTimerTask extends java.util.TimerTask {
         manager = aManager;
     }
 
+    @Override
     public void run() {
         try {
             Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
@@ -477,6 +479,7 @@ class PauseOrResumeScheduleTask extends java.util.TimerTask {
         this.cronTabExpress = aCronTabExpress;
     }
 
+    @Override
     public void run() {
         try {
             log.info("----------执行任务。。{}", type);

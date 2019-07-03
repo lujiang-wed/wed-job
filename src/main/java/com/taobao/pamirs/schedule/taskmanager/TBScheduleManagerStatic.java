@@ -1,25 +1,22 @@
 package com.taobao.pamirs.schedule.taskmanager;
 
-import java.util.List;
-import java.util.Map;
-
+import com.taobao.pamirs.schedule.TaskItemDefine;
+import com.taobao.pamirs.schedule.strategy.TBScheduleManagerFactory;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.taobao.pamirs.schedule.TaskItemDefine;
-import com.taobao.pamirs.schedule.strategy.TBScheduleManagerFactory;
+import java.util.List;
+import java.util.Map;
 
 public class TBScheduleManagerStatic extends TBScheduleManager {
-    private static transient Logger log = LoggerFactory.getLogger(TBScheduleManagerStatic.class);
+    private static transient Logger log                    = LoggerFactory.getLogger(TBScheduleManagerStatic.class);
     /**
      * 总的任务数量
      */
-    protected int taskItemCount = 0;
-
-    protected long lastFetchVersion = -1;
-
-    private final Object NeedReloadTaskItemLock = new Object();
+    protected                int    taskItemCount          = 0;
+    protected                long   lastFetchVersion       = -1;
+    private final            Object NeedReloadTaskItemLock = new Object();
 
     public TBScheduleManagerStatic(TBScheduleManagerFactory aFactory,
                                    String baseTaskType, String ownSign, IScheduleDataManager aScheduleCenter) throws Exception {
@@ -106,11 +103,12 @@ public class TBScheduleManagerStatic extends TBScheduleManager {
      *
      * @throws Exception
      */
+    @Override
     public void refreshScheduleServerInfo() throws Exception {
         try {
             rewriteScheduleInfo();
             //如果任务信息没有初始化成功，不做任务相关的处理
-            if (this.isRuntimeInfoInitial == false) {
+            if (!this.isRuntimeInfoInitial) {
                 return;
             }
 
@@ -127,7 +125,7 @@ public class TBScheduleManagerStatic extends TBScheduleManager {
                 rewriteScheduleInfo();
             }
 
-            if (this.isPauseSchedule == true || this.processor != null && processor.isSleeping() == true) {
+            if (this.isPauseSchedule || this.processor != null && processor.isSleeping()) {
                 //如果服务已经暂停了，则需要重新定时更新 cur_server 和 req_server
                 //如果服务没有暂停，一定不能调用的
                 this.getCurrentScheduleTaskItemListNow();
@@ -188,12 +186,13 @@ public class TBScheduleManagerStatic extends TBScheduleManager {
      *
      * @throws Exception
      */
+    @Override
     public void assignScheduleTask() throws Exception {
         scheduleCenter.clearExpireScheduleServer(this.currenScheduleServer.getTaskType(), this.taskTypeInfo.getJudgeDeadInterval());
         List<String> serverList = scheduleCenter
                 .loadScheduleServerNames(this.currenScheduleServer.getTaskType());
 
-        if (scheduleCenter.isLeader(this.currenScheduleServer.getUuid(), serverList) == false) {
+        if (!scheduleCenter.isLeader(this.currenScheduleServer.getUuid(), serverList)) {
             if (log.isDebugEnabled()) {
                 log.debug(this.currenScheduleServer.getUuid() + ":不是负责任务分配的Leader,直接返回");
             }
@@ -215,14 +214,14 @@ public class TBScheduleManagerStatic extends TBScheduleManager {
      * 特别注意：
      * 此方法的调用必须是在当前所有任务都处理完毕后才能调用，否则是否任务队列后可能数据被重复处理
      */
-
+    @Override
     public List<TaskItemDefine> getCurrentScheduleTaskItemList() {
         try {
-            if (this.isNeedReloadTaskItem == true) {
+            if (this.isNeedReloadTaskItem) {
                 //特别注意：需要判断数据队列是否已经空了，否则可能在队列切换的时候导致数据重复处理
                 //主要是在线程不休眠就加载数据的时候一定需要这个判断
                 if (this.processor != null) {
-                    while (this.processor.isDealFinishAllData() == false) {
+                    while (!this.processor.isDealFinishAllData()) {
                         Thread.sleep(50);
                     }
                 }
@@ -243,25 +242,25 @@ public class TBScheduleManagerStatic extends TBScheduleManager {
      * 由于上面在数据执行时有使用到synchronized ，但是心跳线程并没有对应加锁。
      * 所以在此方法上加一下synchronized。20151015
      *
-     * @since 3.3.3.2 延长调度死亡报警时长，增加僵尸节点报警，然而没有调度服务器重建逻辑。留个todo
-     * TODO:尝试恢复serverList
      * @return
      * @throws Exception
+     * @since 3.3.3.2 延长调度死亡报警时长，增加僵尸节点报警，然而没有调度服务器重建逻辑。留个todo
+     * TODO:尝试恢复serverList
      */
     protected synchronized List<TaskItemDefine> getCurrentScheduleTaskItemListNow() throws Exception {
         //如果已经稳定了，理论上不需要加载去扫描所有的叶子结点
         //20151019 by kongxuan.zlj
-        try{
-            Map<String, Stat> statMap= this.scheduleCenter.getCurrentServerStatList(this.currenScheduleServer.getTaskType());
+        try {
+            Map<String, Stat> statMap = this.scheduleCenter.getCurrentServerStatList(this.currenScheduleServer.getTaskType());
             //server下面的机器节点的运行时环境是否在刷新，如果
             isExistZombieServ(this.currenScheduleServer.getTaskType(), statMap);
-        }catch(Exception e ){
-            log.error("zombie serverList exists， Exception:",e);
+        } catch (Exception e) {
+            log.error("zombie serverList exists， Exception:", e);
         }
 
         //获取最新的版本号
         this.lastFetchVersion = this.scheduleCenter.getReloadTaskItemFlag(this.currenScheduleServer.getTaskType());
-        log.debug(" this.currenScheduleServer.getTaskType()="+this.currenScheduleServer.getTaskType()+",  need reload="+ isNeedReloadTaskItem);
+        log.debug(" this.currenScheduleServer.getTaskType()=" + this.currenScheduleServer.getTaskType() + ",  need reload=" + isNeedReloadTaskItem);
         try {
             //是否被人申请的队列
             this.scheduleCenter.releaseDealTaskItem(this.currenScheduleServer.getTaskType(), this.currenScheduleServer.getUuid());
@@ -274,13 +273,13 @@ public class TBScheduleManagerStatic extends TBScheduleManager {
             //如果超过10个心跳周期还没有获取到调度队列，则报警
             if (this.currentTaskItemList.size() == 0 &&
                     scheduleCenter.getSystemTime() - this.lastReloadTaskItemListTime
-                            > this.taskTypeInfo.getHeartBeatRate() * 20){
-                StringBuffer buf =new StringBuffer();
+                            > this.taskTypeInfo.getHeartBeatRate() * 20) {
+                StringBuffer buf = new StringBuffer();
                 buf.append("调度服务器");
-                buf.append( this.currenScheduleServer.getUuid());
+                buf.append(this.currenScheduleServer.getUuid());
                 buf.append("[TASK_TYPE=");
-                buf.append( this.currenScheduleServer.getTaskType() );
-                buf.append( "]自启动以来，超过20个心跳周期，还 没有获取到分配的任务队列;");
+                buf.append(this.currenScheduleServer.getTaskType());
+                buf.append("]自启动以来，超过20个心跳周期，还 没有获取到分配的任务队列;");
                 buf.append("  currentTaskItemList.size() =").append(currentTaskItemList.size());
                 buf.append(" ,scheduleCenter.getSystemTime()=").append(scheduleCenter.getSystemTime());
                 buf.append(" ,lastReloadTaskItemListTime=").append(lastReloadTaskItemListTime);
@@ -295,7 +294,8 @@ public class TBScheduleManagerStatic extends TBScheduleManager {
 
             return this.currentTaskItemList;
         } catch (Throwable e) {
-            this.lastFetchVersion = -1; //必须把把版本号设置小，避免任务加载失败
+            //必须把把版本号设置小，避免任务加载失败
+            this.lastFetchVersion = -1;
             if (e instanceof Exception) {
                 throw (Exception) e;
             } else {
@@ -304,6 +304,7 @@ public class TBScheduleManagerStatic extends TBScheduleManager {
         }
     }
 
+    @Override
     public int getTaskItemCount() {
         return this.taskItemCount;
     }

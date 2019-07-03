@@ -2,7 +2,7 @@ package com.taobao.pamirs.schedule.zk;
 
 public class Version {
 
-    public final static String SYS_VERSION = "release-1.0.1";
+    public final static String SYS_VERSION = "[WED-JOB]release-1.0.1";
 
     public final static String ZK_VERSION = "3.4.9";
 

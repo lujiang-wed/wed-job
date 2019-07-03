@@ -33,14 +33,14 @@ public class ScheduleStrategyDataManager4ZK {
                     .creatingParentsIfNeeded()
                     .withMode(CreateMode.PERSISTENT)
                     .withACL(this.zkManager.getAcl())
-                    .forPath(this.PATH_Strategy);
+                    .forPath(this.PATH_Strategy, null);
         }
         if (this.getZooKeeper().checkExists().forPath(this.PATH_ManagerFactory) == null) {
             this.getZooKeeper().create()
                     .creatingParentsIfNeeded()
                     .withMode(CreateMode.PERSISTENT)
                     .withACL(this.zkManager.getAcl())
-                    .forPath(this.PATH_ManagerFactory);
+                    .forPath(this.PATH_ManagerFactory, null);
         }
     }
 
@@ -136,7 +136,7 @@ public class ScheduleStrategyDataManager4ZK {
                     .creatingParentsIfNeeded()
                     .withMode(CreateMode.EPHEMERAL_SEQUENTIAL)
                     .withACL(this.zkManager.getAcl())
-                    .forPath(zkPath);
+                    .forPath(zkPath, null);
 
             managerFactory.setUuid(zkPath.substring(zkPath.lastIndexOf("/") + 1));
         } else {
@@ -146,7 +146,7 @@ public class ScheduleStrategyDataManager4ZK {
                         .creatingParentsIfNeeded()
                         .withMode(CreateMode.EPHEMERAL)
                         .withACL(this.zkManager.getAcl())
-                        .forPath(zkPath);
+                        .forPath(zkPath, null);
             }
         }
 
@@ -164,7 +164,7 @@ public class ScheduleStrategyDataManager4ZK {
                                     .creatingParentsIfNeeded()
                                     .withMode(CreateMode.EPHEMERAL)
                                     .withACL(this.zkManager.getAcl())
-                                    .forPath(zkPath);
+                                    .forPath(zkPath, null);
                         }
                         isFind = true;
                         break;
@@ -212,13 +212,13 @@ public class ScheduleStrategyDataManager4ZK {
             if (value != null) {
                 String valueString = new String(this.getZooKeeper().getData().forPath(zkPath));
                 result = (ScheduleStrategyRunntime) this.gson.fromJson(valueString, ScheduleStrategyRunntime.class);
-                if(null==result){
+                if (null == result) {
                     throw new Exception("gson 反序列化异常,对象为null");
                 }
-                if(null==result.getStrategyName()){
+                if (null == result.getStrategyName()) {
                     throw new Exception("gson 反序列化异常,策略名字为null");
                 }
-                if(null==result.getUuid()){
+                if (null == result.getUuid()) {
                     throw new Exception("gson 反序列化异常,uuid为null");
                 }
             } else {
@@ -371,7 +371,7 @@ public class ScheduleStrategyDataManager4ZK {
                     .creatingParentsIfNeeded()
                     .withMode(CreateMode.PERSISTENT)
                     .withACL(this.zkManager.getAcl())
-                    .forPath(path);
+                    .forPath(path, null);
 
             String y_node = path + "/" + configNode.getName();
             if (getZooKeeper().checkExists().forPath(y_node) == null) {

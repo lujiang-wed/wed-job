@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -100,7 +101,7 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
             // 注册调度管理器
             this.scheduleStrategyManager.registerManagerFactory(this);
             if (timer == null) {
-                timer = new ScheduledThreadPoolExecutor(1);
+                timer = new ScheduledThreadPoolExecutor(1, t -> new Thread("[wed-job]注册调度管理器..."));
             }
             if (timerTask == null) {
                 timerTask = new ManagerFactoryTimerTask(this);

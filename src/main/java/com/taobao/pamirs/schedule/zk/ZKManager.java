@@ -88,7 +88,7 @@ public class ZKManager {
                 zkClient.create()
                         .creatingParentContainersIfNeeded()
                         .withMode(CreateMode.PERSISTENT)
-                        .forPath(SYS_ROOT_PATH + properties.getProperty(keys.rootPath.toString()));
+                        .forPath(SYS_ROOT_PATH + properties.getProperty(keys.rootPath.toString()), null);
             }
 
         } else {
@@ -98,7 +98,7 @@ public class ZKManager {
 
     public static Properties createProperties() {
         Properties result = new Properties();
-        result.setProperty(keys.zkConnectString.toString(), "localhost:2181");
+        result.setProperty(keys.zkConnectString.toString(), "19.19.22.51:2181,19.19.22.52:2181,19.19.22.53:2181");
         result.setProperty(keys.rootPath.toString(), SYS_ROOT_PATH + "/tasks_center");
         result.setProperty(keys.userName.toString(), "admin");
         result.setProperty(keys.password.toString(), "admin");

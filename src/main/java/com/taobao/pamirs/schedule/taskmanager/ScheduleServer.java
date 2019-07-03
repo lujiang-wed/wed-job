@@ -69,10 +69,6 @@ public class ScheduleServer {
     private boolean   isRegister;
     private String    managerFactoryUUID;
 
-    public ScheduleServer() {
-
-    }
-
     public static ScheduleServer createScheduleServer(IScheduleDataManager aScheduleCenter, String aBaseTaskType,
                                                       String aOwnSign, int aThreadNum)
             throws Exception {
