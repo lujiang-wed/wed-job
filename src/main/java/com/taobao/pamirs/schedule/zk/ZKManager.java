@@ -82,13 +82,13 @@ public class ZKManager {
             if (sysPath == null) {
                 zkClient.create()
                         .withMode(CreateMode.PERSISTENT)
-                        .forPath(SYS_ROOT_PATH, Version.getVersion().getBytes());
+                        .forPath(SYS_ROOT_PATH);
             }
             if (rootPath == null) {
                 zkClient.create()
                         .creatingParentContainersIfNeeded()
                         .withMode(CreateMode.PERSISTENT)
-                        .forPath(SYS_ROOT_PATH + properties.getProperty(keys.rootPath.toString()), null);
+                        .forPath(SYS_ROOT_PATH + properties.getProperty(keys.rootPath.toString()), Version.getVersion().getBytes());
             }
 
         } else {
