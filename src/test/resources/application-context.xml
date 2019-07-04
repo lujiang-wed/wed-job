@@ -19,6 +19,4 @@
             </map>
         </property>
     </bean>
-
-    <bean id="testJob" class="com.taobao.pamirs.schedule.test.TestJob"/>
 </beans>

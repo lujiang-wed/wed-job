@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -101,11 +100,11 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
             // 注册调度管理器
             this.scheduleStrategyManager.registerManagerFactory(this);
             if (timer == null) {
-                timer = new ScheduledThreadPoolExecutor(1, t -> new Thread("[wed-job]注册调度管理器..."));
+                timer = new ScheduledThreadPoolExecutor(2, t -> new Thread("[wed-job]注册调度管理器..."));
             }
             if (timerTask == null) {
                 timerTask = new ManagerFactoryTimerTask(this);
-                timer.scheduleAtFixedRate(timerTask, 2000, this.timerInterval, TimeUnit.MILLISECONDS);
+                timer.scheduleWithFixedDelay(timerTask, 2000, this.timerInterval, TimeUnit.MILLISECONDS);
             }
         }
     }
@@ -413,7 +412,7 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
 }
 
 class ManagerFactoryTimerTask extends java.util.TimerTask {
-    private static transient Logger log = LoggerFactory.getLogger(ManagerFactoryTimerTask.class);
+    private static transient Logger logger = LoggerFactory.getLogger(ManagerFactoryTimerTask.class);
     TBScheduleManagerFactory factory;
     int count = 0;
 
@@ -423,11 +422,12 @@ class ManagerFactoryTimerTask extends java.util.TimerTask {
 
     @Override
     public void run() {
+        logger.info("Zookeeper连接开始......");
         try {
             Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
             if (!this.factory.zkManager.checkZookeeperState()) {
                 if (count > 5) {
-                    log.error("Zookeeper连接失败，关闭所有的任务后，重新连接Zookeeper服务器......");
+                    logger.error("Zookeeper连接失败，关闭所有的任务后，重新连接Zookeeper服务器......");
                     this.factory.reStart();
 
                 } else {
@@ -438,7 +438,7 @@ class ManagerFactoryTimerTask extends java.util.TimerTask {
                 this.factory.refresh();
             }
         } catch (Throwable ex) {
-            log.error(ex.getMessage(), ex);
+            logger.error(ex.getMessage(), ex);
         } finally {
             factory.timerTaskHeartBeatTS = System.currentTimeMillis();
         }
