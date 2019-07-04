@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -100,7 +101,7 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
             // 注册调度管理器
             this.scheduleStrategyManager.registerManagerFactory(this);
             if (timer == null) {
-                timer = new ScheduledThreadPoolExecutor(2, t -> new Thread("[wed-job]注册调度管理器..."));
+                timer = new ScheduledThreadPoolExecutor(2);
             }
             if (timerTask == null) {
                 timerTask = new ManagerFactoryTimerTask(this);
@@ -413,10 +414,10 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
 
 class ManagerFactoryTimerTask extends java.util.TimerTask {
     private static transient Logger logger = LoggerFactory.getLogger(ManagerFactoryTimerTask.class);
-    TBScheduleManagerFactory factory;
-    int count = 0;
+    private TBScheduleManagerFactory factory;
+    private int count = 0;
 
-    public ManagerFactoryTimerTask(TBScheduleManagerFactory aFactory) {
+    ManagerFactoryTimerTask(TBScheduleManagerFactory aFactory) {
         this.factory = aFactory;
     }
 

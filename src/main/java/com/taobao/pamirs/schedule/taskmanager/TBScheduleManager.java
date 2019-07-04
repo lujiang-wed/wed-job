@@ -91,7 +91,7 @@ abstract class TBScheduleManager implements IStrategyTask {
      */
     boolean isRuntimeInfoInitial = false;
     private TBScheduleManagerFactory factory;
-    private ScheduledThreadPoolExecutor heartBeatTimer = new ScheduledThreadPoolExecutor(1, t -> new Thread(currenScheduleServer.getTaskType() + "-" + currentSerialNumber + "-HeartBeat"));
+    private ScheduledThreadPoolExecutor heartBeatTimer = new ScheduledThreadPoolExecutor(2);
 
     TBScheduleManager(TBScheduleManagerFactory aFactory, String baseTaskType, String ownSign, IScheduleDataManager aScheduleCenter) throws Exception {
         this.factory = aFactory;
