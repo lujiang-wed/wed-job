@@ -82,7 +82,7 @@ public class ZKManager {
             if (sysPath == null) {
                 zkClient.create()
                         .withMode(CreateMode.PERSISTENT)
-                        .forPath(SYS_ROOT_PATH);
+                        .forPath(SYS_ROOT_PATH, null);
             }
             if (rootPath == null) {
                 zkClient.create()
