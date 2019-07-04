@@ -423,7 +423,6 @@ class ManagerFactoryTimerTask extends java.util.TimerTask {
 
     @Override
     public void run() {
-        logger.info("Zookeeper连接开始......");
         try {
             Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
             if (!this.factory.zkManager.checkZookeeperState()) {
