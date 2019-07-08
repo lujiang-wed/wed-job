@@ -39,11 +39,18 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 abstract class TBScheduleManager implements IStrategyTask {
-    private static transient Logger logger           = LoggerFactory.getLogger(TBScheduleManager.class);
+    private static transient Logger logger = LoggerFactory.getLogger(TBScheduleManager.class);
+    /**
+     * 调度管理注册锁使用
+     *
+     * 原ZooKeeper官方客户端不含事务
+     * fixed 2019-07-08 by Wednesday
+     */
+    private        Lock registerLock     = new ReentrantLock();
     /**
      * 用户标识不同线程的序号
      */
-    private static           int    nextSerialNumber = 0;
+    private static int  nextSerialNumber = 0;
     /**
      * 当前线程组编号
      */
@@ -66,7 +73,6 @@ abstract class TBScheduleManager implements IStrategyTask {
     IScheduleProcessor processor;
     protected IScheduleDataManager scheduleCenter;
     private StatisticsInfo statisticsInfo = new StatisticsInfo();
-    boolean              isPauseSchedule            = true;
     /**
      * 没有采用官方3.3.3.2的建议使用CopyOnWriteArrayList，官方注重读取速度造成状态机异常。
      * 故此处还是采用顺序操作
@@ -80,12 +86,12 @@ abstract class TBScheduleManager implements IStrategyTask {
      * 当前实际  - 上此装载时间  > intervalReloadTaskItemList，则向配置中心请求最新的任务分配情况
      */
     long                 lastReloadTaskItemListTime = 0;
+    boolean              isPauseSchedule            = true;
     boolean              isNeedReloadTaskItem       = true;
+    String               startErrorInfo             = null;
     protected boolean isStopSchedule = false;
     private   String  pauseMessage   = "";
     private String mBeanName;
-    String startErrorInfo = null;
-    private Lock registerLock = new ReentrantLock();
     /**
      * 运行期信息是否初始化成功
      */
@@ -193,7 +199,7 @@ abstract class TBScheduleManager implements IStrategyTask {
             } else {
                 this.currenScheduleServer.setDealInfoDesc(startErrorInfo);
             }
-            if (this.scheduleCenter.refreshScheduleServer(this.currenScheduleServer) == false) {
+            if (!this.scheduleCenter.refreshScheduleServer(this.currenScheduleServer)) {
                 //更新信息失败，清除内存数据后重新注册
                 this.clearMemoInfo();
                 this.scheduleCenter.registerScheduleServer(this.currenScheduleServer);

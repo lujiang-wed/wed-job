@@ -796,7 +796,7 @@ public class ScheduleDataManager4ZK implements IScheduleDataManager {
                     .create()
                     .withMode(CreateMode.PERSISTENT)
                     .withACL(this.zkManager.getAcl())
-                    .forPath(zkPath);
+                    .forPath(zkPath, null);
         }
         zkPath = zkPath + "/" + this.PATH_Server;
         if (this.getZooKeeper().checkExists().forPath(zkPath) == null) {
@@ -804,7 +804,7 @@ public class ScheduleDataManager4ZK implements IScheduleDataManager {
                     .create()
                     .withMode(CreateMode.PERSISTENT)
                     .withACL(this.zkManager.getAcl())
-                    .forPath(zkPath);
+                    .forPath(zkPath, null);
         }
         String realPath = null;
         //此处必须增加UUID作为唯一性保障
@@ -815,7 +815,7 @@ public class ScheduleDataManager4ZK implements IScheduleDataManager {
                 .create()
                 .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
                 .withACL(this.zkManager.getAcl())
-                .forPath(zkServerPath);
+                .forPath(zkServerPath, null);
 
         server.setUuid(realPath.substring(realPath.lastIndexOf("/") + 1));
 
