@@ -489,7 +489,7 @@ public class ScheduleDataManager4ZK implements IScheduleDataManager {
             byte[] reqServerValue = this.getZooKeeper().getData().forPath(zkPath + "/" + name + "/req_server");
             if (reqServerValue != null && curServerValue != null && uuid.equals(new String(curServerValue))) {
                 this.getZooKeeper().setData().forPath(zkPath + "/" + name + "/cur_server", reqServerValue);
-                this.getZooKeeper().setData().forPath(zkPath + "/" + name + "/req_server");
+                this.getZooKeeper().setData().forPath(zkPath + "/" + name + "/req_server", null);
                 isModify = true;
             }
         }
@@ -571,7 +571,7 @@ public class ScheduleDataManager4ZK implements IScheduleDataManager {
                     }
                 }
                 if (!isFind) {
-                    this.getZooKeeper().setData().forPath(zkPath + "/" + name + "/cur_server");
+                    this.getZooKeeper().setData().forPath(zkPath + "/" + name + "/cur_server", null);
                     result = result + 1;
                 }
             } else {
@@ -716,7 +716,7 @@ public class ScheduleDataManager4ZK implements IScheduleDataManager {
 
             if (curServerValue == null || new String(curServerValue).equals(NO_SERVER_DEAL)) {
                 this.getZooKeeper().setData().forPath(zkPath + "/" + name + "/cur_server", serverName.getBytes());
-                this.getZooKeeper().setData().forPath(zkPath + "/" + name + "/req_server");
+                this.getZooKeeper().setData().forPath(zkPath + "/" + name + "/req_server", null);
             } else if (new String(curServerValue).equals(serverName) && reqServerValue == null) {
                 //不需要做任何事情
                 unModifyCount = unModifyCount + 1;
@@ -763,7 +763,7 @@ public class ScheduleDataManager4ZK implements IScheduleDataManager {
             byte[] reqServerValue = this.getZooKeeper().getData().forPath(zkPath + "/" + name + "/req_server");
             if (curServerValue == null) {
                 this.getZooKeeper().setData().forPath(zkPath + "/" + name + "/cur_server", serverList.get(point).getBytes());
-                this.getZooKeeper().setData().forPath(zkPath + "/" + name + "/req_server");
+                this.getZooKeeper().setData().forPath(zkPath + "/" + name + "/req_server", null);
             } else if (new String(curServerValue).equals(serverList.get(point)) && reqServerValue == null) {
                 //不需要做任何事情
                 unModifyCount = unModifyCount + 1;
