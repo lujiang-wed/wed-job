@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -105,7 +104,7 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
             }
             if (timerTask == null) {
                 timerTask = new ManagerFactoryTimerTask(this);
-                timer.scheduleWithFixedDelay(timerTask, 2000, this.timerInterval, TimeUnit.MILLISECONDS);
+                timer.schedule(timerTask, this.timerInterval, TimeUnit.MILLISECONDS);
             }
         }
     }
