@@ -28,4 +28,11 @@ public class TaskItemDefine {
 		return taskItemId;
 	}
 
+    @Override
+    public String toString() {
+        return "TaskItemDefine{" +
+                "taskItemId='" + taskItemId + '\'' +
+                ", parameter='" + parameter + '\'' +
+                '}';
+    }
 }

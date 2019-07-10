@@ -1,21 +1,5 @@
 package com.taobao.pamirs.schedule.strategy;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Timer;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
-import org.apache.zookeeper.ZooKeeper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-
 import com.taobao.pamirs.schedule.ConsoleManager;
 import com.taobao.pamirs.schedule.IScheduleTaskDeal;
 import com.taobao.pamirs.schedule.ScheduleUtil;
@@ -24,55 +8,43 @@ import com.taobao.pamirs.schedule.taskmanager.TBScheduleManagerStatic;
 import com.taobao.pamirs.schedule.zk.ScheduleDataManager4ZK;
 import com.taobao.pamirs.schedule.zk.ScheduleStrategyDataManager4ZK;
 import com.taobao.pamirs.schedule.zk.ZKManager;
+import org.apache.curator.framework.CuratorFramework;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
-/**
- * 调度服务器构造器
- *
- * @author xuannan
- */
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 public class TBScheduleManagerFactory implements ApplicationContextAware {
 
-    protected static transient Logger logger = LoggerFactory.getLogger(TBScheduleManagerFactory.class);
-
-    private Map<String, String> zkConfig;
-
+    private static final Logger  logger               = LoggerFactory.getLogger(TBScheduleManagerFactory.class);
+    public               boolean start                = true;
+    public volatile      long    timerTaskHeartBeatTS = System.currentTimeMillis();
     protected ZKManager zkManager;
-
-
-    /**
-     * 是否启动调度管理，如果只是做系统管理，应该设置为false
-     */
-    public boolean start = true;
+    protected Lock   lock         = new ReentrantLock();
+    volatile  String errorMessage = "No config Zookeeper connect infomation";
+    private Map<String, String> zkConfig;
     private int timerInterval = 2000;
-
-    /**
-     * ManagerFactoryTimerTask上次执行的时间戳。<br/>
-     * zk环境不稳定，可能导致所有task自循环丢失，调度停止。<br/>
-     * 外层应用，通过jmx暴露心跳时间，监控这个tbschedule最重要的大循环。<br/>
-     *
-     * @since 3.3.3.2.RELEASE
-     */
-    public volatile long timerTaskHeartBeatTS = System.currentTimeMillis();
-
-    /**
-     * 调度配置中心客服端
-     */
-    private IScheduleDataManager scheduleDataManager;
+    private IScheduleDataManager           scheduleDataManager;
     private ScheduleStrategyDataManager4ZK scheduleStrategyManager;
-
-    private Map<String, List<IStrategyTask>> managerMap = new ConcurrentHashMap<String, List<IStrategyTask>>();
-
-    private ApplicationContext applicationcontext;
-    private String uuid;
-    private String ip;
-    private String hostName;
-
-    private Timer timer;
-    private ManagerFactoryTimerTask timerTask;
-    protected Lock lock = new ReentrantLock();
-
-    volatile String errorMessage = "No config Zookeeper connect infomation";
-    private InitialThread initialThread;
+    private Map<String, List<IStrategyTask>> managerMap = new ConcurrentHashMap<>();
+    private ApplicationContext          applicationContext;
+    private String                      uuid;
+    private String                      ip;
+    private String                      hostName;
+    private ScheduledThreadPoolExecutor timer;
+    private ManagerFactoryTimerTask     timerTask;
+    private InitialThread               initialThread;
 
     public TBScheduleManagerFactory() {
         this.ip = ScheduleUtil.getLocalIP();
@@ -88,7 +60,7 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
     }
 
     public void reInit(Properties p) throws Exception {
-        if (this.start == true || this.timer != null || this.managerMap.size() > 0) {
+        if (this.start || this.timer != null || this.managerMap.size() > 0) {
             throw new Exception("调度器有任务处理，不能重新初始化");
         }
         this.init(p);
@@ -122,18 +94,17 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
      * @throws Exception
      */
     public void initialData() throws Exception {
-        this.zkManager.initial();
         this.scheduleDataManager = new ScheduleDataManager4ZK(this.zkManager);
         this.scheduleStrategyManager = new ScheduleStrategyDataManager4ZK(this.zkManager);
-        if (this.start == true) {
+        if (this.start) {
             // 注册调度管理器
             this.scheduleStrategyManager.registerManagerFactory(this);
             if (timer == null) {
-                timer = new Timer("TBScheduleManagerFactory-Timer");
+                timer = new ScheduledThreadPoolExecutor(2);
             }
             if (timerTask == null) {
                 timerTask = new ManagerFactoryTimerTask(this);
-                timer.schedule(timerTask, 2000, this.timerInterval);
+                timer.schedule(timerTask, this.timerInterval, TimeUnit.MILLISECONDS);
             }
         }
     }
@@ -176,15 +147,17 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
                 isException = true;
                 logger.error("获取服务器信息有误：uuid=" + this.getUuid(), e);
             }
-            if (isException == true) {
+            if (isException) {
                 try {
-                    stopServer(null); // 停止所有的调度任务
+                    // 停止所有的调度任务
+                    stopServer(null);
                     this.getScheduleStrategyManager().unRregisterManagerFactory(this);
                 } finally {
                     reRegisterManagerFactory();
                 }
-            } else if (stsInfo.isStart() == false) {
-                stopServer(null); // 停止所有的调度任务
+            } else if (!stsInfo.isStart()) {
+                // 停止所有的调度任务
+                stopServer(null);
                 this.getScheduleStrategyManager().unRregisterManagerFactory(
                         this);
             } else {
@@ -246,11 +219,7 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
 
     public void reRunScheduleServer() throws Exception {
         for (ScheduleStrategyRunntime run : this.scheduleStrategyManager.loadAllScheduleStrategyRunntimeByUUID(this.uuid)) {
-            List<IStrategyTask> list = this.managerMap.get(run.getStrategyName());
-            if (list == null) {
-                list = new ArrayList<IStrategyTask>();
-                this.managerMap.put(run.getStrategyName(), list);
-            }
+            List<IStrategyTask> list = this.managerMap.computeIfAbsent(run.getStrategyName(), k -> new ArrayList<>());
             while (list.size() > run.getRequestNum() && list.size() > 0) {
                 IStrategyTask task = list.remove(list.size() - 1);
                 try {
@@ -265,7 +234,7 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
                 IStrategyTask result = this.createStrategyTask(strategy);
                 if (null == result) {
                     logger.error("strategy 对应的配置有问题。strategy name=" + strategy.getStrategyName());
-                }else {
+                } else {
                     list.add(result);
                 }
             }
@@ -280,13 +249,14 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
      */
     public void stopServer(String strategyName) throws Exception {
         if (strategyName == null) {
-            String[] nameList = (String[]) this.managerMap.keySet().toArray(new String[0]);
+            String[] nameList = this.managerMap.keySet().toArray(new String[0]);
             for (String name : nameList) {
                 for (IStrategyTask task : this.managerMap.get(name)) {
                     try {
+                        //TODO:TEST
                         task.stop(strategyName);
                     } catch (Throwable e) {
-                        logger.error("注销任务错误：strategyName="+strategyName,e);
+                        logger.error("注销任务错误：strategyName=" + strategyName, e);
                     }
                 }
                 this.managerMap.remove(name);
@@ -322,7 +292,7 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
                     this.timerTask.cancel();
                     this.timerTask = null;
                 }
-                this.timer.cancel();
+                this.timer.shutdown();
                 this.timer = null;
             }
             this.stopServer(null);
@@ -331,12 +301,12 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
             }
             if (this.scheduleStrategyManager != null) {
                 try {
-                    ZooKeeper zk = this.scheduleStrategyManager.getZooKeeper();
+                    CuratorFramework zk = this.scheduleStrategyManager.getZooKeeper();
                     if (zk != null) {
                         zk.close();
                     }
                 } catch (Exception e) {
-                    logger.error("stopAll zk getZooKeeper异常！",e);
+                    logger.error("stopAll zk getZooKeeper异常！", e);
                 }
             }
             this.uuid = null;
@@ -378,8 +348,7 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
     }
 
     public String[] getScheduleTaskDealList() {
-        return applicationcontext.getBeanNamesForType(IScheduleTaskDeal.class);
-
+        return applicationContext.getBeanNamesForType(IScheduleTaskDeal.class);
     }
 
     public IScheduleDataManager getScheduleDataManager() {
@@ -396,24 +365,16 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
         return scheduleStrategyManager;
     }
 
-    public void setApplicationContext(ApplicationContext aApplicationcontext) throws BeansException {
-        applicationcontext = aApplicationcontext;
-    }
-
-    public Object getBean(String beanName) {
-        return applicationcontext.getBean(beanName);
-    }
-
     public String getUuid() {
         return uuid;
     }
 
-    public String getIp() {
-        return ip;
-    }
-
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+
+    public String getIp() {
+        return ip;
     }
 
     public String getHostName() {
@@ -428,10 +389,6 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
         this.timerInterval = timerInterval;
     }
 
-    public void setZkConfig(Map<String, String> zkConfig) {
-        this.zkConfig = zkConfig;
-    }
-
     public ZKManager getZkManager() {
         return this.zkManager;
     }
@@ -439,23 +396,37 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
     public Map<String, String> getZkConfig() {
         return zkConfig;
     }
+
+    public void setZkConfig(Map<String, String> zkConfig) {
+        this.zkConfig = zkConfig;
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
+    }
+
+    public Object getBean(String name) {
+        return this.applicationContext.getBean(name);
+    }
 }
 
 class ManagerFactoryTimerTask extends java.util.TimerTask {
-    private static transient Logger log = LoggerFactory.getLogger(ManagerFactoryTimerTask.class);
-    TBScheduleManagerFactory factory;
-    int count = 0;
+    private static transient Logger logger = LoggerFactory.getLogger(ManagerFactoryTimerTask.class);
+    private TBScheduleManagerFactory factory;
+    private int count = 0;
 
-    public ManagerFactoryTimerTask(TBScheduleManagerFactory aFactory) {
+    ManagerFactoryTimerTask(TBScheduleManagerFactory aFactory) {
         this.factory = aFactory;
     }
 
+    @Override
     public void run() {
         try {
             Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
-            if (this.factory.zkManager.checkZookeeperState() == false) {
+            if (!this.factory.zkManager.checkZookeeperState()) {
                 if (count > 5) {
-                    log.error("Zookeeper连接失败，关闭所有的任务后，重新连接Zookeeper服务器......");
+                    logger.error("Zookeeper连接失败，关闭所有的任务后，重新连接Zookeeper服务器......");
                     this.factory.reStart();
 
                 } else {
@@ -466,8 +437,8 @@ class ManagerFactoryTimerTask extends java.util.TimerTask {
                 this.factory.refresh();
             }
         } catch (Throwable ex) {
-            log.error(ex.getMessage(), ex);
-        }finally {
+            logger.error(ex.getMessage(), ex);
+        } finally {
             factory.timerTaskHeartBeatTS = System.currentTimeMillis();
         }
     }
@@ -478,7 +449,7 @@ class InitialThread extends Thread {
     TBScheduleManagerFactory facotry;
     boolean isStop = false;
 
-    public InitialThread(TBScheduleManagerFactory aFactory) {
+    InitialThread(TBScheduleManagerFactory aFactory) {
         this.facotry = aFactory;
     }
 
@@ -491,14 +462,14 @@ class InitialThread extends Thread {
         facotry.lock.lock();
         try {
             int count = 0;
-            while (facotry.zkManager.checkZookeeperState() == false) {
+            while (!facotry.zkManager.checkZookeeperState()) {
                 count = count + 1;
                 if (count % 50 == 0) {
                     facotry.errorMessage = "Zookeeper connecting ......" + facotry.zkManager.getConnectStr() + " spendTime:" + count * 20 + "(ms)";
                     log.error(facotry.errorMessage);
                 }
                 Thread.sleep(20);
-                if (this.isStop == true) {
+                if (this.isStop) {
                     return;
                 }
             }
@@ -508,7 +479,5 @@ class InitialThread extends Thread {
         } finally {
             facotry.lock.unlock();
         }
-
     }
-
 }

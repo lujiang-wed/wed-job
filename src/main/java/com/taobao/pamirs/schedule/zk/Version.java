@@ -1,18 +1,16 @@
 package com.taobao.pamirs.schedule.zk;
 
 public class Version {
-	
-   public final static String version="tbschedule-3.2.12";
-   
-   public static String getVersion(){
-	   return version;
-   }
-   public static boolean isCompatible(String dataVersion){
-	  if(version.compareTo(dataVersion)>=0){
-		  return true;
-	  }else{
-		  return false;
-	  }
-   }
-   
+
+    public final static String SYS_VERSION = "[WED-JOB]release-1.0.1";
+
+    public final static String ZK_VERSION = "3.4.9";
+
+    public static String getVersion() {
+        return SYS_VERSION + "|" + ZK_VERSION;
+    }
+
+    public static boolean isCompatible(String dataVersion) {
+        return (SYS_VERSION + "|" + ZK_VERSION).compareTo(dataVersion) >= 0;
+    }
 }
