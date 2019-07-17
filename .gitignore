@@ -8,6 +8,7 @@
 *.ctxt
 
 #IDE files
+target/
 .idea/
 *.iml
 
