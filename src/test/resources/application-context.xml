@@ -9,7 +9,8 @@
 
     </tx:annotation-config>
 
-    <bean name="taobaoScheduleManagerFactory" class="com.taobao.pamirs.schedule.strategy.TBScheduleManagerFactory">
+    <bean name="taobaoScheduleManagerFactory" class="com.taobao.pamirs.schedule.strategy.TBScheduleManagerFactory"
+    init-method="init">
         <property name="zkConfig">
             <map>
                 <entry key="zkConnectString" value="19.19.22.52:2181,19.19.22.51:2181,19.19.22.53:2181"/>

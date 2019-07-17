@@ -75,14 +75,14 @@ public class ZKManager {
 
         zk.start();
 
-        createZookeeper();
-
         acl.clear();
         acl.add(new ACL(ZooDefs.Perms.ALL, new Id("digest",
                 DigestAuthenticationProvider.generateDigest(authString))));
         acl.add(new ACL(ZooDefs.Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE));
 
         zk.setACL().withACL(acl);
+
+        createZookeeper();
     }
 
     private void createZookeeper() throws Exception {

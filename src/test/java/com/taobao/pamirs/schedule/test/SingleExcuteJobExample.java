@@ -16,7 +16,7 @@ import java.util.List;
  * @description
  * @since 2019/7/17 10:27
  */
-@Component
+@Component("singleExcuteJobExample")
 public class SingleExcuteJobExample implements IScheduleTaskDealSingle<String> {
 
     @Override
