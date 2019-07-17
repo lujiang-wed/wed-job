@@ -23,6 +23,8 @@
 	mvn clean package
 
 **RELEASE NOTE**
+
+
 Jul 17 2019-1.0.1_RELEASE
 
 1.maven坐标变更
