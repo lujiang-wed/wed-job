@@ -23,6 +23,20 @@
 	mvn clean package
 
 **RELEASE NOTE**
+Jul 17 2019-1.0.1_RELEASE
+
+1.maven坐标变更
+```
+<dependency>
+    <groupId>com.wednesday</groupId>
+    <artifactId>wed-job</artifactId>
+    <version>1.0.1</version>
+</dependency>
+```
+2.修复因使用Timer类自身误差BUG在高频SLEEP模式下调用任务，当误差时间累积超过SLEEP时间时任务变成无限执行的问题（使用的ScheduledThreadPoolExecutord代替）；
+3.将原生ZooKeeper api 替换为CuratorFramework以修复因官方最后版本zk重连机制不健全引起的任务执行server假死无任何日志输出的问题；
+
+---
 
 Feb 28 2019-1.0.1_GA：
 
@@ -30,6 +44,8 @@ Feb 28 2019-1.0.1_GA：
 2. 使用CuratorFramework代替官方ZooKeeper API已获得更好的链接稳定性已经重连机制
 3. 更新Java支持到[1.7,1.8)
 4. 整理项目结构
+
+---
 
 Nov 5 2018-1.0.0：
 
@@ -39,5 +55,7 @@ Nov 5 2018-1.0.0：
 
 **TODO**
 
-1. add:新版Console
-2. fix:彻底修复高频词运行下任务假死的问题
+1.modify:计划新增单次执行操作以替代startrun标记，避免某些情况下认为疏忽导致任务多执行数次（每一次暂停恢复startrun都生效）；
+2.add:计划重构wed-job-admin，因能力有限拟采用mvc替换jsp为项目提供更直观便捷的调式能力；
+3.feature:提供数据库注册中心的并行版本，可视化更强，效率会比目前版本低一些但是能避免ZooKeeper对网络的高依赖，性能与稳定的平衡交给用户选择。
+4.feature:提供便捷的子任务功能，目前版本子任务需要大量代码实现且不具备可视化能力，但是没有任务编排怎么又好意思成为一个完整的任务调度中心呢？
