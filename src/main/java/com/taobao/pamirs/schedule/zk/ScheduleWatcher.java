@@ -3,6 +3,7 @@ package com.taobao.pamirs.schedule.zk;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
@@ -10,22 +11,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ScheduleWatcher implements Watcher {
-    private static transient Logger log = LoggerFactory.getLogger(ScheduleWatcher.class);
-    private Map<String, Watcher> route = new ConcurrentHashMap<String, Watcher>();
-    private ZKManager manager;
+    private static transient Logger logger = LoggerFactory.getLogger(ScheduleWatcher.class);
+    private Map<String, Watcher>    route  = new ConcurrentHashMap<String, Watcher>();
+    private CuratorFramework manager;
 
-    public ScheduleWatcher(ZKManager aManager) {
+    public ScheduleWatcher(CuratorFramework aManager) {
         this.manager = aManager;
     }
 
     public void registerChildrenChanged(String path, Watcher watcher) throws Exception {
-        manager.getZooKeeper().getChildren(path, true);
+        manager.getChildren().forPath(path);
         route.put(path, watcher);
     }
 
     public void process(WatchedEvent event) {
-        if (log.isInfoEnabled()) {
-            log.info("已经触发了" + event.getType() + ":" + event.getState() + "事件！" + event.getPath());
+        if (logger.isInfoEnabled()) {
+            logger.info("已经触发了" + event.getType() + ":" + event.getState() + "事件！" + event.getPath());
         }
         if (event.getType() == Event.EventType.NodeChildrenChanged) {
             String path = event.getPath();
@@ -35,31 +36,31 @@ public class ScheduleWatcher implements Watcher {
                     watcher.process(event);
                 } finally {
                     try {
-                        if (manager.getZooKeeper().exists(path, null) != null) {
-                            manager.getZooKeeper().getChildren(path, true);
+                        if (manager.checkExists().forPath(path) != null) {
+                            manager.getChildren().forPath(path);
                         }
                     } catch (Exception e) {
-                        log.error(path + ":" + e.getMessage(), e);
+                        logger.error(path + ":" + e.getMessage(), e);
                     }
                 }
             } else {
-                log.info("已经触发了" + event.getType() + ":" + event.getState() + "事件！" + event.getPath());
+                logger.info("已经触发了" + event.getType() + ":" + event.getState() + "事件！" + event.getPath());
             }
         } else if (event.getState() == KeeperState.SyncConnected) {
-            log.info("收到ZK连接成功事件！");
+            logger.info("收到ZK连接成功事件！");
         } else if (event.getState() == KeeperState.Disconnected) {
-            log.info("链接断开，等待中心建立ZK链接");
+            logger.info("链接断开，等待中心建立ZK链接");
             try {
-                manager.reConnection();
+                manager.start();
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                logger.error(e.getMessage(), e);
             }
         } else if (event.getState() == KeeperState.Expired) {
-            log.error("会话超时，等待重新建立ZK连接...");
+            logger.error("会话超时，等待重新建立ZK连接...");
             try {
-                manager.reConnection();
+                manager.start();
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                logger.error(e.getMessage(), e);
             }
         }
     }
