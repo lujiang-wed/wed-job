@@ -27,7 +27,7 @@
 
 Jul 17 2019-1.0.1_RELEASE
 
-1.maven坐标变更
+1. maven坐标变更
 ```
 <dependency>
     <groupId>com.wednesday</groupId>
@@ -35,8 +35,8 @@ Jul 17 2019-1.0.1_RELEASE
     <version>1.0.1</version>
 </dependency>
 ```
-2.修复因使用Timer类自身误差BUG在高频SLEEP模式下调用任务，当误差时间累积超过SLEEP时间时任务变成无限执行的问题（使用的ScheduledThreadPoolExecutord代替）；
-3.将原生ZooKeeper api 替换为CuratorFramework以修复因官方最后版本zk重连机制不健全引起的任务执行server假死无任何日志输出的问题；
+2. 修复因使用Timer类自身误差BUG在高频SLEEP模式下调用任务，当误差时间累积超过SLEEP时间时任务变成无限执行的问题（使用的ScheduledThreadPoolExecutord代替）；
+3. 将原生ZooKeeper api 替换为CuratorFramework以修复因官方最后版本zk重连机制不健全引起的任务执行server假死无任何日志输出的问题；
 
 ---
 
