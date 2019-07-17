@@ -1,5 +1,21 @@
 package com.taobao.pamirs.schedule.strategy;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Timer;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import org.apache.zookeeper.ZooKeeper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+
 import com.taobao.pamirs.schedule.ConsoleManager;
 import com.taobao.pamirs.schedule.IScheduleTaskDeal;
 import com.taobao.pamirs.schedule.ScheduleUtil;
@@ -8,22 +24,6 @@ import com.taobao.pamirs.schedule.taskmanager.TBScheduleManagerStatic;
 import com.taobao.pamirs.schedule.zk.ScheduleDataManager4ZK;
 import com.taobao.pamirs.schedule.zk.ScheduleStrategyDataManager4ZK;
 import com.taobao.pamirs.schedule.zk.ZKManager;
-import org.apache.curator.framework.CuratorFramework;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * 调度服务器构造器
@@ -42,8 +42,8 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
     /**
      * 是否启动调度管理，如果只是做系统管理，应该设置为false
      */
-    public  boolean start         = true;
-    private int     timerInterval = 2000;
+    public boolean start = true;
+    private int timerInterval = 2000;
 
     /**
      * ManagerFactoryTimerTask上次执行的时间戳。<br/>
@@ -57,18 +57,18 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
     /**
      * 调度配置中心客服端
      */
-    private IScheduleDataManager           scheduleDataManager;
+    private IScheduleDataManager scheduleDataManager;
     private ScheduleStrategyDataManager4ZK scheduleStrategyManager;
 
     private Map<String, List<IStrategyTask>> managerMap = new ConcurrentHashMap<String, List<IStrategyTask>>();
 
     private ApplicationContext applicationcontext;
-    private String             uuid;
-    private String             ip;
-    private String             hostName;
+    private String uuid;
+    private String ip;
+    private String hostName;
 
-    private ScheduledThreadPoolExecutor timer;
-    private ManagerFactoryTimerTask     timerTask;
+    private Timer timer;
+    private ManagerFactoryTimerTask timerTask;
     protected Lock lock = new ReentrantLock();
 
     volatile String errorMessage = "No config Zookeeper connect infomation";
@@ -125,16 +125,15 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
         this.zkManager.initial();
         this.scheduleDataManager = new ScheduleDataManager4ZK(this.zkManager);
         this.scheduleStrategyManager = new ScheduleStrategyDataManager4ZK(this.zkManager);
-        if (this.start) {
+        if (this.start == true) {
             // 注册调度管理器
             this.scheduleStrategyManager.registerManagerFactory(this);
             if (timer == null) {
-                timer = new ScheduledThreadPoolExecutor(2);
+                timer = new Timer("TBScheduleManagerFactory-Timer");
             }
             if (timerTask == null) {
                 timerTask = new ManagerFactoryTimerTask(this);
-                Thread.sleep(2000);
-                timer.schedule(timerTask, this.timerInterval, TimeUnit.MILLISECONDS);
+                timer.schedule(timerTask, 2000, this.timerInterval);
             }
         }
     }
@@ -266,7 +265,7 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
                 IStrategyTask result = this.createStrategyTask(strategy);
                 if (null == result) {
                     logger.error("strategy 对应的配置有问题。strategy name=" + strategy.getStrategyName());
-                } else {
+                }else {
                     list.add(result);
                 }
             }
@@ -287,7 +286,7 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
                     try {
                         task.stop(strategyName);
                     } catch (Throwable e) {
-                        logger.error("注销任务错误：strategyName=" + strategyName, e);
+                        logger.error("注销任务错误：strategyName="+strategyName,e);
                     }
                 }
                 this.managerMap.remove(name);
@@ -323,10 +322,7 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
                     this.timerTask.cancel();
                     this.timerTask = null;
                 }
-                /*
-                 *不确定ScheduledThreadPoolExecutor的shutdown是否等效于Timer的cancel
-                 */
-                this.timer.shutdown();
+                this.timer.cancel();
                 this.timer = null;
             }
             this.stopServer(null);
@@ -335,12 +331,12 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
             }
             if (this.scheduleStrategyManager != null) {
                 try {
-                    CuratorFramework zk = this.scheduleStrategyManager.getZooKeeper();
+                    ZooKeeper zk = this.scheduleStrategyManager.getZooKeeper();
                     if (zk != null) {
                         zk.close();
                     }
                 } catch (Exception e) {
-                    logger.error("stopAll zk getZooKeeper异常！", e);
+                    logger.error("stopAll zk getZooKeeper异常！",e);
                 }
             }
             this.uuid = null;
@@ -400,7 +396,6 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
         return scheduleStrategyManager;
     }
 
-    @Override
     public void setApplicationContext(ApplicationContext aApplicationcontext) throws BeansException {
         applicationcontext = aApplicationcontext;
     }
@@ -447,7 +442,7 @@ public class TBScheduleManagerFactory implements ApplicationContextAware {
 }
 
 class ManagerFactoryTimerTask extends java.util.TimerTask {
-    private static transient Logger logger = LoggerFactory.getLogger(ManagerFactoryTimerTask.class);
+    private static transient Logger log = LoggerFactory.getLogger(ManagerFactoryTimerTask.class);
     TBScheduleManagerFactory factory;
     int count = 0;
 
@@ -455,14 +450,12 @@ class ManagerFactoryTimerTask extends java.util.TimerTask {
         this.factory = aFactory;
     }
 
-    @Override
     public void run() {
         try {
-            Thread.currentThread().setName("TBScheduleManagerFactory-Timer");
             Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
             if (this.factory.zkManager.checkZookeeperState() == false) {
                 if (count > 5) {
-                    logger.error("Zookeeper连接失败，关闭所有的任务后，重新连接Zookeeper服务器......");
+                    log.error("Zookeeper连接失败，关闭所有的任务后，重新连接Zookeeper服务器......");
                     this.factory.reStart();
 
                 } else {
@@ -473,8 +466,8 @@ class ManagerFactoryTimerTask extends java.util.TimerTask {
                 this.factory.refresh();
             }
         } catch (Throwable ex) {
-            logger.error(ex.getMessage(), ex);
-        } finally {
+            log.error(ex.getMessage(), ex);
+        }finally {
             factory.timerTaskHeartBeatTS = System.currentTimeMillis();
         }
     }
