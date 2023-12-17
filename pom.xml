@@ -229,7 +229,7 @@
     <distributionManagement>
         <repository>
             <id>3rd</id>
-            <url>http://19.19.9.248:8081/repository/3rd_part/</url>
+            <url>https://19.19.9.248:8081/repository/3rd_part/</url>
         </repository>
     </distributionManagement>
 </project>
